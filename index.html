@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>학교 식단표 평가</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Pretendard, "Noto Sans KR", Arial, sans-serif;
+      background: #f4f7f5;
+      color: #252525;
+    }
+
+    header {
+      padding: 42px 20px;
+      text-align: center;
+      color: white;
+      background: linear-gradient(135deg, #4caf72, #6aca8c);
+    }
+
+    header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      opacity: 0.92;
+    }
+
+    .container {
+      width: min(950px, 94%);
+      margin: 26px auto 50px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    button,
+    input,
+    textarea {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    input,
+    textarea {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 15px;
+      outline: none;
+      background: white;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #4caf72;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 85px;
+      resize: vertical;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    #schoolInput {
+      flex: 1;
+    }
+
+    .green-button {
+      border: none;
+      background: #4caf72;
+      color: white;
+      border-radius: 12px;
+      padding: 13px 19px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .green-button:hover {
+      background: #3e9e62;
+    }
+
+    .gray-button {
+      border: none;
+      background: #edf6f0;
+      color: #287746;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .red-button {
+      border: none;
+      background: #ffe8e8;
+      color: #b24040;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    #schoolResults {
+      margin-top: 13px;
+    }
+
+    .school-result {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    .school-result:hover {
+      background: #f4faf6;
+    }
+
+    .school-result strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .school-result span {
+      color: #777;
+      font-size: 13px;
+    }
+
+    .selected-school {
+      display: none;
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 12px;
+      background: #e8f7ed;
+      color: #287746;
+      font-weight: bold;
+    }
+
+    .date-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .date-button {
+      border: none;
+      background: #edf6f0;
+      color: #287746;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 17px;
+    }
+
+    #dateTitle {
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    #todayBadge {
+      color: #43a66a;
+      margin-left: 5px;
+    }
+
+    .today-button {
+      display: block;
+      margin: 13px auto 0;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 15px;
+      background: #687982;
+      color: white;
+    }
+
+    .section-title {
+      margin-bottom: 15px;
+      font-size: 21px;
+    }
+
+    .loading,
+    .empty {
+      background: white;
+      border-radius: 18px;
+      padding: 38px 20px;
+      text-align: center;
+      color: #888;
+      line-height: 1.7;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .meal-card {
+      background: white;
+      border-radius: 18px;
+      padding: 23px;
+      margin-bottom: 15px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .meal-title {
+      color: #33945b;
+      font-size: 21px;
+      margin-bottom: 15px;
+    }
+
+    .meal-menu {
+      font-size: 16px;
+      line-height: 2;
+    }
+
+    .meal-info {
+      border-top: 1px solid #eee;
+      padding-top: 13px;
+      margin-top: 15px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .review-box {
+      padding: 18px;
+      border-radius: 16px;
+      background: #f8fbf9;
+      border: 1px solid #e4eee7;
+    }
+
+    .review-box h3 {
+      margin-bottom: 12px;
+      color: #287746;
+    }
+
+    .label {
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .stars {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0 12px;
+      font-size: 34px;
+      user-select: none;
+    }
+
+    .star {
+      color: #d5d5d5;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .star.active {
+      color: #ffbf2e;
+    }
+
+    .star:hover {
+      transform: scale(1.12);
+    }
+
+    .score-text {
+      font-size: 14px;
+      color: #777;
+    }
+
+    .suggestion-box {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 16px;
+      background: #fffaf0;
+      border: 1px solid #f1dfb7;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .saved-message {
+      margin-top: 12px;
+      color: #287746;
+      font-weight: bold;
+      display: none;
+    }
+
+    .allergy-card {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 18px;
+      background: #fff8e7;
+      border: 1px solid #f3e1ae;
+    }
+
+    .allergy-card h3 {
+      color: #79601c;
+      margin-bottom: 14px;
+    }
+
+    .allergy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .allergy-item {
+      background: white;
+      padding: 9px;
+      border-radius: 9px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .allergy-item strong {
+      color: #bb8517;
+    }
+
+    .allergy-note {
+      margin-top: 13px;
+      color: #766a4c;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      padding: 25px;
+    }
+
+    @media (max-width: 700px) {
+      header {
+        padding: 32px 15px;
+      }
+
+      header h1 {
+        font-size: 26px;
+      }
+
+      .search-row {
+        flex-direction: column;
+      }
+
+      .green-button {
+        width: 100%;
+      }
+
+      .review-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .allergy-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      #dateTitle {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🍚 학교 식단표 평가</h1>
+    <p>식단표를 확인하고 기대점수와 실제점수를 기록하세요</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="search-row">
+        <input id="schoolInput" type="text" placeholder="학교 이름 검색">
+        <button class="green-button" onclick="searchSchool()">학교 검색</button>
+      </div>
+
+      <div id="schoolResults"></div>
+      <div id="selectedSchool" class="selected-school"></div>
+    </section>
+
+    <section class="card">
+      <div class="date-row">
+        <button class="date-button" onclick="changeDate(-1)">◀</button>
+        <div id="dateTitle"></div>
+        <button class="date-button" onclick="changeDate(1)">▶</button>
+      </div>
+
+      <button class="today-button" onclick="goToday()">📅 오늘로 이동</button>
+    </section>
+
+    <section>
+      <h2 class="section-title">🍽️ 식단표</h2>
+
+      <div id="mealArea">
+        <div class="empty">
+          학교를 검색해서 선택해주세요.
+        </div>
+      </div>
+
+      <div class="allergy-card">
+        <h3>⚠️ 알레르기 정보</h3>
+
+        <div class="allergy-grid">
+          <div class="allergy-item"><strong>1</strong> 난류</div>
+          <div class="allergy-item"><strong>2</strong> 우유</div>
+          <div class="allergy-item"><strong>3</strong> 메밀</div>
+          <div class="allergy-item"><strong>4</strong> 땅콩</div>
+          <div class="allergy-item"><strong>5</strong> 대두</div>
+          <div class="allergy-item"><strong>6</strong> 밀</div>
+          <div class="allergy-item"><strong>7</strong> 고등어</div>
+          <div class="allergy-item"><strong>8</strong> 게</div>
+          <div class="allergy-item"><strong>9</strong> 새우</div>
+          <div class="allergy-item"><strong>10</strong> 돼지고기</div>
+          <div class="allergy-item"><strong>11</strong> 복숭아</div>
+          <div class="allergy-item"><strong>12</strong> 토마토</div>
+          <div class="allergy-item"><strong>13</strong> 아황산류</div>
+          <div class="allergy-item"><strong>14</strong> 호두</div>
+          <div class="allergy-item"><strong>15</strong> 닭고기</div>
+          <div class="allergy-item"><strong>16</strong> 쇠고기</div>
+          <div class="allergy-item"><strong>17</strong> 오징어</div>
+          <div class="allergy-item"><strong>18</strong> 조개류</div>
+          <div class="allergy-item"><strong>19</strong> 잣</div>
+        </div>
+
+        <div class="allergy-note">
+          음식 이름 뒤의 숫자가 알레르기 유발 식품 번호입니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">⭐ 식단 평가 작성</h2>
+
+      <div class="review-grid">
+        <div class="review-box">
+          <h3>기대 평가</h3>
+
+          <div class="label">기대의견</div>
+          <textarea id="expectedOpinion"></textarea>
+
+          <div class="label">기대점수</div>
+          <div class="stars" id="expectedStars">
+            <span class="star" onclick="setRating('expected', 1)">★</span>
+            <span class="star" onclick="setRating('expected', 2)">★</span>
+            <span class="star" onclick="setRating('expected', 3)">★</span>
+            <span class="star" onclick="setRating('expected', 4)">★</span>
+            <span class="star" onclick="setRating('expected', 5)">★</span>
+          </div>
+          <div class="score-text" id="expectedScoreText">0점 / 5점</div>
+        </div>
+
+        <div class="review-box">
+          <h3>실제 평가</h3>
+
+          <div class="label">실제의견</div>
+          <textarea id="actualOpinion"></textarea>
+
+          <div class="label">실제점수</div>
+          <div class="stars" id="actualStars">
+            <span class="star" onclick="setRating('actual', 1)">★</span>
+            <span class="star" onclick="setRating('actual', 2)">★</span>
+            <span class="star" onclick="setRating('actual', 3)">★</span>
+            <span class="star" onclick="setRating('actual', 4)">★</span>
+            <span class="star" onclick="setRating('actual', 5)">★</span>
+          </div>
+          <div class="score-text" id="actualScoreText">0점 / 5점</div>
+        </div>
+      </div>
+
+      <div class="suggestion-box">
+        <div class="label">건의사항</div>
+        <textarea id="suggestion"></textarea>
+      </div>
+
+      <div class="button-row">
+        <button class="green-button" onclick="saveReview()">평가 저장</button>
+        <button class="gray-button" onclick="loadReview()">저장된 평가 불러오기</button>
+        <button class="red-button" onclick="clearReview()">평가 삭제</button>
+      </div>
+
+      <div class="saved-message" id="savedMessage">
+        저장되었습니다.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    식단표 데이터: NEIS 교육정보 개방 포털
+  </footer>
+
+  <script>
+    let selectedSchool = null;
+    let currentDate = new Date();
+
+    let expectedRating = 0;
+    let actualRating = 0;
+
+    function pad(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function formatYMD(date) {
+      return (
+        date.getFullYear() +
+        pad(date.getMonth() + 1) +
+        pad(date.getDate())
+      );
+    }
+
+    function isSameDate(a, b) {
+      return (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+      );
+    }
+
+    function updateDateTitle() {
+      const year = currentDate.getFullYear();
+      const month = pad(currentDate.getMonth() + 1);
+      const day = pad(currentDate.getDate());
+
+      const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+      const dayName = dayNames[currentDate.getDay()];
+
+      const today = new Date();
+
+      const todayText = isSameDate(currentDate, today)
+        ? `<span id="todayBadge">· 오늘</span>`
+        : "";
+
+      document.getElementById("dateTitle").innerHTML =
+        `${year}.${month}.${day} (${dayName}) ${todayText}`;
+    }
+
+    function changeDate(amount) {
+      currentDate.setDate(currentDate.getDate() + amount);
+      updateDateTitle();
+      loadMeal();
+      resetReviewForm();
+      loadReview();
+    }
+
+    function goToday() {
+      currentDate = new Date();
+      updateDateTitle();
+      loadMeal();
+      resetReviewForm();
+      loadReview();
+    }
+
+    function getRows(data, key) {
+      try {
+        if (
+          data &&
+          data[key] &&
+          data[key][1] &&
+          Array.isArray(data[key][1].row)
+        ) {
+          return data[key][1].row;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      return [];
+    }
+
+    async function searchSchool() {
+      const input = document.getElementById("schoolInput").value.trim();
+      const area = document.getElementById("schoolResults");
+
+      if (!input) {
+        alert("학교 이름을 입력해주세요.");
+        return;
+      }
+
+      area.innerHTML = `
+        <div class="loading">
+          학교를 검색하고 있습니다...
+        </div>
+      `;
+
+      try {
+        const url =
+          "https://open.neis.go.kr/hub/schoolInfo" +
+          "?Type=json" +
+          "&pIndex=1" +
+          "&pSize=30" +
+          "&SCHUL_NM=" +
+          encodeURIComponent(input);
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const schools = getRows(data, "schoolInfo");
+
+        if (schools.length === 0) {
+          area.innerHTML = `
+            <div class="empty">
+              검색된 학교가 없습니다.
+            </div>
+          `;
+          return;
+        }
+
+        area.innerHTML = "";
+
+        schools.forEach(school => {
+          const result = document.createElement("div");
+          result.className = "school-result";
+
+          result.innerHTML = `
+            <strong>${escapeHTML(school.SCHUL_NM)}</strong>
+            <span>
+              ${escapeHTML(school.SCHUL_KND_SC_NM || "")}
+              ·
+              ${escapeHTML(school.ORG_RDNMA || "")}
+            </span>
+          `;
+
+          result.onclick = () => {
+            selectSchool(school);
+          };
+
+          area.appendChild(result);
+        });
+
+      } catch (error) {
+        console.error(error);
+
+        area.innerHTML = `
+          <div class="empty">
+            학교 검색 중 오류가 발생했습니다.
+            <br>
+            인터넷 연결을 확인해주세요.
+          </div>
+        `;
+      }
+    }
+
+    function selectSchool(school) {
+      selectedSchool = {
+        name: school.SCHUL_NM,
+        officeCode: school.ATPT_OFCDC_SC_CODE,
+        schoolCode: school.SD_SCHUL_CODE,
+        schoolType: school.SCHUL_KND_SC_NM || ""
+      };
+
+      localStorage.setItem(
+        "mealReviewSelectedSchool",
+        JSON.stringify(selectedSchool)
+      );
+
+      document.getElementById("schoolResults").innerHTML = "";
+
+      updateSelectedSchool();
+      loadMeal();
+      resetReviewForm();
+      loadReview();
+    }
+
+    function updateSelectedSchool() {
+      const area = document.getElementById("selectedSchool");
+
+      if (!selectedSchool) {
+        area.style.display = "none";
+        return;
+      }
+
+      area.style.display = "block";
+
+      area.innerHTML =
+        `🏫 ${escapeHTML(selectedSchool.name)}
+        &nbsp;·&nbsp;
+        ${escapeHTML(selectedSchool.schoolType)}`;
+    }
+
+    async function loadMeal() {
+      const area = document.getElementById("mealArea");
+
+      if (!selectedSchool) {
+        area.innerHTML = `
+          <div class="empty">
+            학교를 검색해서 선택해주세요.
+          </div>
+        `;
+        return;
+      }
+
+      area.innerHTML = `
+        <div class="loading">
+          식단표를 불러오고 있습니다...
+        </div>
+      `;
+
+      try {
+        const date = formatYMD(currentDate);
+
+        const url =
+          "https://open.neis.go.kr/hub/mealServiceDietInfo" +
+          "?Type=json" +
+          "&pIndex=1" +
+          "&pSize=100" +
+          "&ATPT_OFCDC_SC_CODE=" +
+          encodeURIComponent(selectedSchool.officeCode) +
+          "&SD_SCHUL_CODE=" +
+          encodeURIComponent(selectedSchool.schoolCode) +
+          "&MLSV_YMD=" +
+          date;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const meals = getRows(data, "mealServiceDietInfo");
+
+        if (meals.length === 0) {
+          area.innerHTML = `
+            <div class="empty">
+              🍽️ 등록된 식단표가 없습니다.
+              <br>
+              주말·공휴일이거나 학교에서 식단을 등록하지 않은 날일 수 있습니다.
+            </div>
+          `;
+          return;
+        }
+
+        area.innerHTML = "";
+
+        meals.forEach(meal => {
+          const card = document.createElement("div");
+          card.className = "meal-card";
+
+          const menu = (meal.DDISH_NM || "")
+            .replaceAll("<br/>", "<br>")
+            .replaceAll("<br />", "<br>");
+
+          card.innerHTML = `
+            <h3 class="meal-title">
+              ${getMealEmoji(meal.MMEAL_SC_NM || "")}
+              ${escapeHTML(meal.MMEAL_SC_NM || "급식")}
+            </h3>
+
+            <div class="meal-menu">
+              ${menu}
+            </div>
+
+            <div class="meal-info">
+              🔥 열량 :
+              ${escapeHTML(meal.CAL_INFO || "정보 없음")}
+            </div>
+          `;
+
+          area.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error(error);
+
+        area.innerHTML = `
+          <div class="empty">
+            식단표를 불러오지 못했습니다.
+          </div>
+        `;
+      }
+    }
+
+    function getMealEmoji(name) {
+      if (name.includes("조식")) return "🌅";
+      if (name.includes("중식")) return "☀️";
+      if (name.includes("석식")) return "🌙";
+      return "🍚";
+    }
+
+    function setRating(type, score) {
+      if (type === "expected") {
+        expectedRating = score;
+        updateStars("expectedStars", expectedRating);
+        document.getElementById("expectedScoreText").textContent =
+          `${expectedRating}점 / 5점`;
+      }
+
+      if (type === "actual") {
+        actualRating = score;
+        updateStars("actualStars", actualRating);
+        document.getElementById("actualScoreText").textContent =
+          `${actualRating}점 / 5점`;
+      }
+    }
+
+    function updateStars(starBoxId, score) {
+      const stars = document
+        .getElementById(starBoxId)
+        .querySelectorAll(".star");
+
+      stars.forEach((star, index) => {
+        if (index < score) {
+          star.classList.add("active");
+        } else {
+          star.classList.remove("active");
+        }
+      });
+    }
+
+    function getReviewKey() {
+      const schoolCode = selectedSchool
+        ? selectedSchool.schoolCode
+        : "noSchool";
+
+      return `mealReview_${schoolCode}_${formatYMD(currentDate)}`;
+    }
+
+    function saveReview() {
+      if (!selectedSchool) {
+        alert("먼저 학교를 선택해주세요.");
+        return;
+      }
+
+      const review = {
+        schoolName: selectedSchool.name,
+        date: formatYMD(currentDate),
+        expectedOpinion: document.getElementById("expectedOpinion").value.trim(),
+        expectedRating: expectedRating,
+        actualOpinion: document.getElementById("actualOpinion").value.trim(),
+        actualRating: actualRating,
+        suggestion: document.getElementById("suggestion").value.trim()
+      };
+
+      localStorage.setItem(getReviewKey(), JSON.stringify(review));
+
+      const message = document.getElementById("savedMessage");
+      message.style.display = "block";
+
+      setTimeout(() => {
+        message.style.display = "none";
+      }, 1800);
+    }
+
+    function loadReview() {
+      if (!selectedSchool) {
+        return;
+      }
+
+      const saved = localStorage.getItem(getReviewKey());
+
+      if (!saved) {
+        return;
+      }
+
+      try {
+        const review = JSON.parse(saved);
+
+        document.getElementById("expectedOpinion").value =
+          review.expectedOpinion || "";
+
+        document.getElementById("actualOpinion").value =
+          review.actualOpinion || "";
+
+        document.getElementById("suggestion").value =
+          review.suggestion || "";
+
+        expectedRating = Number(review.expectedRating || 0);
+        actualRating = Number(review.actualRating || 0);
+
+        updateStars("expectedStars", expectedRating);
+        updateStars("actualStars", actualRating);
+
+        document.getElementById("expectedScoreText").textContent =
+          `${expectedRating}점 / 5점`;
+
+        document.getElementById("actualScoreText").textContent =
+          `${actualRating}점 / 5점`;
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function clearReview() {
+      if (!selectedSchool) {
+        alert("먼저 학교를 선택해주세요.");
+        return;
+      }
+
+      if (!confirm("현재 날짜의 평가를 삭제할까요?")) {
+        return;
+      }
+
+      localStorage.removeItem(getReviewKey());
+      resetReviewForm();
+      alert("평가가 삭제되었습니다.");
+    }
+
+    function resetReviewForm() {
+      document.getElementById("expectedOpinion").value = "";
+      document.getElementById("actualOpinion").value = "";
+      document.getElementById("suggestion").value = "";
+
+      expectedRating = 0;
+      actualRating = 0;
+
+      updateStars("expectedStars", 0);
+      updateStars("actualStars", 0);
+
+      document.getElementById("expectedScoreText").textContent = "0점 / 5점";
+      document.getElementById("actualScoreText").textContent = "0점 / 5점";
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function loadSavedSchool() {
+      const saved = localStorage.getItem("mealReviewSelectedSchool");
+
+      if (!saved) {
+        return;
+      }
+
+      try {
+        selectedSchool = JSON.parse(saved);
+        updateSelectedSchool();
+        loadMeal();
+        loadReview();
+      } catch (error) {
+        localStorage.removeItem("mealReviewSelectedSchool");
+      }
+    }
+
+    document
+      .getElementById("schoolInput")
+      .addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          searchSchool();
+        }
+      });
+
+    updateDateTitle();
+    loadSavedSchool();
+  </script>
+</body>
+</html>
