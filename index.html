@@ -213,10 +213,38 @@
 
     .meal-card {
       background: white;
+      border: 2px solid transparent;
       border-radius: 18px;
       padding: 23px;
       margin-bottom: 15px;
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .meal-card:hover {
+      border-color: #9bd5ad;
+    }
+
+    .meal-card.selected {
+      border-color: #4caf72;
+      background: #f3fbf5;
+    }
+
+    .meal-select-hint {
+      margin-top: 12px;
+      color: #559568;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .selected-meal-notice {
+      margin: -5px 0 18px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #e8f7ed;
+      color: #287746;
+      line-height: 1.6;
     }
 
     .meal-title {
@@ -456,8 +484,9 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="reviewSection" style="display: none;">
       <h2 class="section-title">⭐ 식단 평가 작성</h2>
+      <div id="selectedMealNotice" class="selected-meal-notice"></div>
 
       <div class="review-grid">
         <div class="review-box">
@@ -518,6 +547,7 @@
 
   <script>
     let selectedSchool = null;
+    let selectedMeal = null;
     let currentDate = new Date();
 
     let expectedRating = 0;
@@ -564,17 +594,22 @@
     function changeDate(amount) {
       currentDate.setDate(currentDate.getDate() + amount);
       updateDateTitle();
+      clearMealSelection();
       loadMeal();
-      resetReviewForm();
-      loadReview();
     }
 
     function goToday() {
       currentDate = new Date();
       updateDateTitle();
+      clearMealSelection();
       loadMeal();
+    }
+
+    function clearMealSelection() {
+      selectedMeal = null;
+      document.getElementById("reviewSection").style.display = "none";
+      document.getElementById("selectedMealNotice").textContent = "";
       resetReviewForm();
-      loadReview();
     }
 
     function getRows(data, key) {
@@ -683,9 +718,8 @@
       document.getElementById("schoolResults").innerHTML = "";
 
       updateSelectedSchool();
+      clearMealSelection();
       loadMeal();
-      resetReviewForm();
-      loadReview();
     }
 
     function updateSelectedSchool() {
@@ -758,6 +792,9 @@
         meals.forEach(meal => {
           const card = document.createElement("div");
           card.className = "meal-card";
+          card.tabIndex = 0;
+          card.setAttribute("role", "button");
+          card.setAttribute("aria-label", `${meal.MMEAL_SC_NM || "급식"} 선택 후 평가 작성`);
 
           const menu = (meal.DDISH_NM || "")
             .replaceAll("<br/>", "<br>")
@@ -777,8 +814,16 @@
               🔥 열량 :
               ${escapeHTML(meal.CAL_INFO || "정보 없음")}
             </div>
+            <div class="meal-select-hint">이 급식을 선택하고 평가 작성하기 ›</div>
           `;
 
+          card.addEventListener("click", () => selectMeal(meal, card));
+          card.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              selectMeal(meal, card);
+            }
+          });
           area.appendChild(card);
         });
 
@@ -791,6 +836,33 @@
           </div>
         `;
       }
+    }
+
+    function selectMeal(meal, selectedCard) {
+      if (!selectedSchool) {
+        alert("먼저 학교를 선택해주세요.");
+        return;
+      }
+
+      selectedMeal = {
+        code: String(meal.MMEAL_SC_CODE || meal.MMEAL_SC_NM || "meal"),
+        name: meal.MMEAL_SC_NM || "급식"
+      };
+
+      document.querySelectorAll(".meal-card").forEach(card => {
+        card.classList.remove("selected");
+        card.setAttribute("aria-pressed", "false");
+      });
+      selectedCard.classList.add("selected");
+      selectedCard.setAttribute("aria-pressed", "true");
+
+      const reviewSection = document.getElementById("reviewSection");
+      reviewSection.style.display = "block";
+      document.getElementById("selectedMealNotice").textContent =
+        `🏫 ${selectedSchool.name} · ${formatYMD(currentDate)} · ${selectedMeal.name} 평가`;
+
+      resetReviewForm();
+      loadReview();
     }
 
     function getMealEmoji(name) {
@@ -831,16 +903,14 @@
     }
 
     function getReviewKey() {
-      const schoolCode = selectedSchool
-        ? selectedSchool.schoolCode
-        : "noSchool";
-
-      return `mealReview_${schoolCode}_${formatYMD(currentDate)}`;
+      const schoolCode = selectedSchool ? selectedSchool.schoolCode : "noSchool";
+      const mealCode = selectedMeal ? selectedMeal.code : "noMeal";
+      return `mealReview_${schoolCode}_${formatYMD(currentDate)}_${mealCode}`;
     }
 
     function saveReview() {
-      if (!selectedSchool) {
-        alert("먼저 학교를 선택해주세요.");
+      if (!selectedSchool || !selectedMeal) {
+        alert("학교를 선택한 뒤 평가할 날짜의 급식 메뉴를 클릭해주세요.");
         return;
       }
 
@@ -865,7 +935,7 @@
     }
 
     function loadReview() {
-      if (!selectedSchool) {
+      if (!selectedSchool || !selectedMeal) {
         return;
       }
 
@@ -905,8 +975,8 @@
     }
 
     function clearReview() {
-      if (!selectedSchool) {
-        alert("먼저 학교를 선택해주세요.");
+      if (!selectedSchool || !selectedMeal) {
+        alert("학교를 선택한 뒤 평가할 날짜의 급식 메뉴를 클릭해주세요.");
         return;
       }
 
@@ -953,8 +1023,8 @@
       try {
         selectedSchool = JSON.parse(saved);
         updateSelectedSchool();
+        clearMealSelection();
         loadMeal();
-        loadReview();
       } catch (error) {
         localStorage.removeItem("mealReviewSelectedSchool");
       }
