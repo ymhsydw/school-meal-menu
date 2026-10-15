@@ -247,6 +247,78 @@
       line-height: 1.6;
     }
 
+    .db-status {
+      width: min(950px, 94%);
+      margin: 14px auto 0;
+      padding: 12px 15px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      background: #fff8e7;
+      border: 1px solid #f0dfb2;
+      color: #765d20;
+    }
+
+    .db-status.connected {
+      background: #e8f7ed;
+      border-color: #c8e9d2;
+      color: #287746;
+    }
+
+    .db-status.error {
+      background: #fff0f0;
+      border-color: #f1caca;
+      color: #a33c3c;
+    }
+
+    .community-box {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 16px;
+      background: #f5f8ff;
+      border: 1px solid #dfe7fa;
+    }
+
+    .community-box h3 {
+      color: #344f85;
+      margin-bottom: 10px;
+    }
+
+    .community-summary {
+      margin-bottom: 14px;
+      color: #4c5b77;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .community-review {
+      background: white;
+      border: 1px solid #e4e9f5;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .community-review-meta {
+      color: #777;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .community-review-rating {
+      font-weight: bold;
+      color: #8a6410;
+      margin-bottom: 7px;
+    }
+
+    .community-review-text {
+      white-space: pre-wrap;
+      line-height: 1.65;
+      font-size: 14px;
+      color: #444;
+    }
+
     .meal-title {
       color: #33945b;
       font-size: 21px;
@@ -423,6 +495,10 @@
     <p>식단표를 확인하고 기대점수와 실제점수를 기록하세요</p>
   </header>
 
+  <div id="dbStatus" class="db-status">
+    데이터베이스 연결 설정이 필요합니다. 아래 코드에서 Supabase URL과 공개 키를 입력하고 SQL 설정을 완료하세요.
+  </div>
+
   <main class="container">
     <section class="card">
       <div class="search-row">
@@ -538,20 +614,97 @@
       <div class="saved-message" id="savedMessage">
         저장되었습니다.
       </div>
+
+      <div class="community-box">
+        <h3>👥 같은 급식에 대한 다른 평가</h3>
+        <div id="communitySummary" class="community-summary">
+          급식을 선택하면 다른 방문자의 평가도 볼 수 있습니다.
+        </div>
+        <div id="communityReviews"></div>
+      </div>
     </section>
   </main>
 
   <footer>
-    식단표 데이터: NEIS 교육정보 개방 포털
+    식단표 데이터: NEIS 교육정보 개방 포털 · 평가 내용은 다른 방문자에게 공개될 수 있으니 개인정보를 입력하지 마세요.
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // ============================================================
+    // Supabase 설정: Supabase 프로젝트에서 URL과 공개 키를 복사해 넣으세요.
+    // 프런트엔드에는 publishable/anon 공개 키만 사용하세요.
+    // service_role 또는 secret 키는 절대 넣지 마세요.
+    // ============================================================
+    const SUPABASE_URL = "https://neukrzrxpndxmndzfitk.supabase.co";
+    const SUPABASE_PUBLIC_KEY = "sb_publishable_k9vz6g0LsWI4r2T6OyHHFQ_BT-kJ8ml";
+    const TABLE_NAME = "meal_reviews";
+
+    let supabaseClient = null;
+    let currentUser = null;
     let selectedSchool = null;
     let selectedMeal = null;
     let currentDate = new Date();
 
     let expectedRating = 0;
     let actualRating = 0;
+    let authReady = null;
+
+    function isDatabaseConfigured() {
+      return Boolean(
+        SUPABASE_URL &&
+        SUPABASE_PUBLIC_KEY &&
+        !SUPABASE_URL.includes("YOUR_PROJECT_ID") &&
+        !SUPABASE_PUBLIC_KEY.includes("YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY")
+      );
+    }
+
+    function setDatabaseStatus(message, kind = "") {
+      const status = document.getElementById("dbStatus");
+      status.textContent = message;
+      status.className = "db-status" + (kind ? ` ${kind}` : "");
+    }
+
+    async function initializeDatabase() {
+      if (!isDatabaseConfigured()) {
+        setDatabaseStatus(
+          "데이터베이스 미연결 상태입니다. HTML 코드 상단의 SUPABASE_URL과 SUPABASE_PUBLIC_KEY를 입력하고, 제공된 SQL 파일을 Supabase SQL Editor에서 실행하세요."
+        );
+        return false;
+      }
+
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        setDatabaseStatus("Supabase 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.", "error");
+        return false;
+      }
+
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        if (sessionData.session && sessionData.session.user) {
+          currentUser = sessionData.session.user;
+        } else {
+          const { data, error } = await supabaseClient.auth.signInAnonymously();
+          if (error) throw error;
+          currentUser = data.user;
+        }
+
+        setDatabaseStatus(
+          "데이터베이스 연결 완료 · 평가는 온라인에 저장되며, 같은 학교·날짜·급식의 다른 평가도 아래에서 확인할 수 있습니다. 브라우저 데이터가 지워지면 익명 사용자 본인의 평가를 다시 불러오지 못할 수 있습니다.",
+          "connected"
+        );
+        return true;
+      } catch (error) {
+        console.error("Supabase initialization failed:", error);
+        setDatabaseStatus(
+          "데이터베이스 연결에 실패했습니다. Supabase URL/공개 키, Anonymous Sign-Ins 설정, SQL 정책을 확인해주세요. 오류: " + (error.message || "알 수 없는 오류"),
+          "error"
+        );
+        return false;
+      }
+    }
 
     function pad(value) {
       return String(value).padStart(2, "0");
@@ -563,6 +716,10 @@
         pad(date.getMonth() + 1) +
         pad(date.getDate())
       );
+    }
+
+    function formatSQLDate(date) {
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
     }
 
     function isSameDate(a, b) {
@@ -863,6 +1020,7 @@
 
       resetReviewForm();
       loadReview();
+      refreshCommunityReviews();
     }
 
     function getMealEmoji(name) {
@@ -902,106 +1060,219 @@
       });
     }
 
-    function getReviewKey() {
-      const schoolCode = selectedSchool ? selectedSchool.schoolCode : "noSchool";
-      const mealCode = selectedMeal ? selectedMeal.code : "noMeal";
-      return `mealReview_${schoolCode}_${formatYMD(currentDate)}_${mealCode}`;
+    async function waitForDatabase() {
+      if (!authReady) authReady = initializeDatabase();
+      const ready = await authReady;
+      if (!ready || !supabaseClient || !currentUser) {
+        throw new Error("데이터베이스 연결이 완료되지 않았습니다. 위 연결 상태를 확인해주세요.");
+      }
     }
 
-    function saveReview() {
+    function getReviewContext() {
+      if (!selectedSchool || !selectedMeal) {
+        throw new Error("학교를 선택한 뒤 평가할 날짜의 급식 메뉴를 클릭해주세요.");
+      }
+      return {
+        school_name: selectedSchool.name,
+        office_code: selectedSchool.officeCode,
+        school_code: String(selectedSchool.schoolCode),
+        school_type: selectedSchool.schoolType || "",
+        review_date: formatSQLDate(currentDate),
+        meal_code: String(selectedMeal.code),
+        meal_type: selectedMeal.name
+      };
+    }
+
+    async function saveReview() {
       if (!selectedSchool || !selectedMeal) {
         alert("학교를 선택한 뒤 평가할 날짜의 급식 메뉴를 클릭해주세요.");
-        return;
-      }
-
-      const review = {
-        schoolName: selectedSchool.name,
-        date: formatYMD(currentDate),
-        expectedOpinion: document.getElementById("expectedOpinion").value.trim(),
-        expectedRating: expectedRating,
-        actualOpinion: document.getElementById("actualOpinion").value.trim(),
-        actualRating: actualRating,
-        suggestion: document.getElementById("suggestion").value.trim()
-      };
-
-      localStorage.setItem(getReviewKey(), JSON.stringify(review));
-
-      const message = document.getElementById("savedMessage");
-      message.style.display = "block";
-
-      setTimeout(() => {
-        message.style.display = "none";
-      }, 1800);
-    }
-
-    function loadReview() {
-      if (!selectedSchool || !selectedMeal) {
-        return;
-      }
-
-      const saved = localStorage.getItem(getReviewKey());
-
-      if (!saved) {
         return;
       }
 
       try {
-        const review = JSON.parse(saved);
+        await waitForDatabase();
+        const context = getReviewContext();
+        const review = {
+          ...context,
+          user_id: currentUser.id,
+          expected_opinion: document.getElementById("expectedOpinion").value.trim(),
+          expected_rating: expectedRating,
+          actual_opinion: document.getElementById("actualOpinion").value.trim(),
+          actual_rating: actualRating,
+          suggestion: document.getElementById("suggestion").value.trim(),
+          updated_at: new Date().toISOString()
+        };
 
-        document.getElementById("expectedOpinion").value =
-          review.expectedOpinion || "";
+        const { error } = await supabaseClient
+          .from(TABLE_NAME)
+          .upsert(review, { onConflict: "user_id,school_code,review_date,meal_code" });
 
-        document.getElementById("actualOpinion").value =
-          review.actualOpinion || "";
+        if (error) throw error;
 
-        document.getElementById("suggestion").value =
-          review.suggestion || "";
-
-        expectedRating = Number(review.expectedRating || 0);
-        actualRating = Number(review.actualRating || 0);
-
-        updateStars("expectedStars", expectedRating);
-        updateStars("actualStars", actualRating);
-
-        document.getElementById("expectedScoreText").textContent =
-          `${expectedRating}점 / 5점`;
-
-        document.getElementById("actualScoreText").textContent =
-          `${actualRating}점 / 5점`;
-
+        const message = document.getElementById("savedMessage");
+        message.textContent = "온라인 데이터베이스에 저장되었습니다.";
+        message.style.display = "block";
+        setTimeout(() => { message.style.display = "none"; }, 2200);
+        await refreshCommunityReviews();
       } catch (error) {
-        console.error(error);
+        console.error("Save review failed:", error);
+        alert("평가를 저장하지 못했습니다. " + (error.message || "Supabase 설정과 SQL 정책을 확인해주세요."));
       }
     }
 
-    function clearReview() {
+    async function loadReview() {
+      if (!selectedSchool || !selectedMeal) return;
+
+      try {
+        await waitForDatabase();
+        const context = getReviewContext();
+        const { data, error } = await supabaseClient
+          .from(TABLE_NAME)
+          .select("expected_opinion, expected_rating, actual_opinion, actual_rating, suggestion")
+          .eq("user_id", currentUser.id)
+          .eq("school_code", context.school_code)
+          .eq("review_date", context.review_date)
+          .eq("meal_code", context.meal_code)
+          .maybeSingle();
+
+        if (error) throw error;
+        resetReviewForm();
+        if (!data) return;
+
+        document.getElementById("expectedOpinion").value = data.expected_opinion || "";
+        document.getElementById("actualOpinion").value = data.actual_opinion || "";
+        document.getElementById("suggestion").value = data.suggestion || "";
+        expectedRating = Number(data.expected_rating || 0);
+        actualRating = Number(data.actual_rating || 0);
+        updateStars("expectedStars", expectedRating);
+        updateStars("actualStars", actualRating);
+        document.getElementById("expectedScoreText").textContent = `${expectedRating}점 / 5점`;
+        document.getElementById("actualScoreText").textContent = `${actualRating}점 / 5점`;
+      } catch (error) {
+        console.error("Load review failed:", error);
+        setDatabaseStatus("저장된 평가를 불러오지 못했습니다. Supabase 테이블과 권한 설정을 확인해주세요.", "error");
+      }
+    }
+
+    async function clearReview() {
       if (!selectedSchool || !selectedMeal) {
         alert("학교를 선택한 뒤 평가할 날짜의 급식 메뉴를 클릭해주세요.");
         return;
       }
 
-      if (!confirm("현재 날짜의 평가를 삭제할까요?")) {
+      if (!confirm("내가 작성한 현재 급식 평가를 삭제할까요? 다른 사용자의 평가는 삭제되지 않습니다.")) {
         return;
       }
 
-      localStorage.removeItem(getReviewKey());
-      resetReviewForm();
-      alert("평가가 삭제되었습니다.");
+      try {
+        await waitForDatabase();
+        const context = getReviewContext();
+        const { error } = await supabaseClient
+          .from(TABLE_NAME)
+          .delete()
+          .eq("user_id", currentUser.id)
+          .eq("school_code", context.school_code)
+          .eq("review_date", context.review_date)
+          .eq("meal_code", context.meal_code);
+
+        if (error) throw error;
+        resetReviewForm();
+        await refreshCommunityReviews();
+        alert("내 평가를 삭제했습니다.");
+      } catch (error) {
+        console.error("Delete review failed:", error);
+        alert("평가를 삭제하지 못했습니다. " + (error.message || "데이터베이스 설정을 확인해주세요."));
+      }
     }
 
     function resetReviewForm() {
       document.getElementById("expectedOpinion").value = "";
       document.getElementById("actualOpinion").value = "";
       document.getElementById("suggestion").value = "";
+      document.getElementById("savedMessage").style.display = "none";
 
       expectedRating = 0;
       actualRating = 0;
-
       updateStars("expectedStars", 0);
       updateStars("actualStars", 0);
-
       document.getElementById("expectedScoreText").textContent = "0점 / 5점";
       document.getElementById("actualScoreText").textContent = "0점 / 5점";
+    }
+
+    async function refreshCommunityReviews() {
+      const summary = document.getElementById("communitySummary");
+      const list = document.getElementById("communityReviews");
+      list.replaceChildren();
+
+      if (!selectedSchool || !selectedMeal) {
+        summary.textContent = "급식을 선택하면 다른 방문자의 평가도 볼 수 있습니다.";
+        return;
+      }
+
+      try {
+        await waitForDatabase();
+        const context = getReviewContext();
+        summary.textContent = "다른 방문자의 평가를 불러오는 중입니다...";
+
+        const { data, error, count } = await supabaseClient
+          .from(TABLE_NAME)
+          .select("expected_opinion, expected_rating, actual_opinion, actual_rating, suggestion, updated_at", { count: "exact" })
+          .eq("school_code", context.school_code)
+          .eq("review_date", context.review_date)
+          .eq("meal_code", context.meal_code)
+          .order("updated_at", { ascending: false })
+          .limit(30);
+
+        if (error) throw error;
+        const reviews = data || [];
+        const expectedScores = reviews.map(r => Number(r.expected_rating || 0)).filter(n => n > 0);
+        const actualScores = reviews.map(r => Number(r.actual_rating || 0)).filter(n => n > 0);
+        const avg = values => values.length ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : "평가 없음";
+
+        summary.textContent = `등록된 평가 ${count ?? reviews.length}개 · 기대 평균(최근 최대 30개 기준) ${avg(expectedScores)}${expectedScores.length ? "점" : ""} · 실제 평균(최근 최대 30개 기준) ${avg(actualScores)}${actualScores.length ? "점" : ""}`;
+
+        if (reviews.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "아직 이 급식에 등록된 평가가 없습니다. 첫 평가를 남겨보세요!";
+          list.appendChild(empty);
+          return;
+        }
+
+        reviews.forEach((review, index) => {
+          const card = document.createElement("article");
+          card.className = "community-review";
+
+          const meta = document.createElement("div");
+          meta.className = "community-review-meta";
+          const time = review.updated_at ? new Date(review.updated_at) : null;
+          meta.textContent = `익명 방문자 ${index + 1}` + (time && !Number.isNaN(time.getTime()) ? ` · ${time.toLocaleString("ko-KR")}` : "");
+          card.appendChild(meta);
+
+          const rating = document.createElement("div");
+          rating.className = "community-review-rating";
+          rating.textContent = `기대 ${Number(review.expected_rating || 0)}/5점 · 실제 ${Number(review.actual_rating || 0)}/5점`;
+          card.appendChild(rating);
+
+          const fields = [
+            ["기대 의견", review.expected_opinion],
+            ["실제 의견", review.actual_opinion],
+            ["건의사항", review.suggestion]
+          ].filter(([label, value]) => String(value || "").trim());
+
+          fields.forEach(([label, value]) => {
+            const text = document.createElement("div");
+            text.className = "community-review-text";
+            text.textContent = `${label}: ${value}`;
+            text.style.marginTop = "6px";
+            card.appendChild(text);
+          });
+          list.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Load community reviews failed:", error);
+        summary.textContent = "다른 평가를 불러오지 못했습니다. 데이터베이스 연결 및 SQL 정책을 확인해주세요.";
+      }
     }
 
     function escapeHTML(value) {
@@ -1039,6 +1310,7 @@
       });
 
     updateDateTitle();
+    authReady = initializeDatabase();
     loadSavedSchool();
   </script>
 </body>
