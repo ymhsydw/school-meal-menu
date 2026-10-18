@@ -36,8 +36,217 @@
     }
 
     .container {
-      width: min(950px, 94%);
+      width: min(1500px, 97%);
       margin: 26px auto 50px;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .main-content {
+      min-width: 0;
+    }
+
+    .activity-sidebar {
+      position: sticky;
+      top: 14px;
+      max-height: calc(100vh - 28px);
+      overflow: auto;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid #e0ebe3;
+      border-radius: 18px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+      min-width: 0;
+    }
+
+    .activity-sidebar-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .activity-sidebar h2 {
+      color: #287746;
+      font-size: 19px;
+      line-height: 1.45;
+    }
+
+    .activity-sidebar .small-button {
+      flex-shrink: 0;
+    }
+
+    .activity-sidebar-note {
+      color: #6b756d;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .recent-schools-list,
+    .activity-results {
+      display: grid;
+      gap: 8px;
+    }
+
+    .recent-school-button {
+      width: 100%;
+      border: 1px solid #e0ebe3;
+      border-radius: 12px;
+      background: #fbfdfb;
+      color: #2d3c32;
+      text-align: left;
+      padding: 12px;
+      transition: background .15s, border-color .15s;
+    }
+
+    .recent-school-button:hover,
+    .recent-school-button.active {
+      border-color: #4caf72;
+      background: #eff9f2;
+    }
+
+    .recent-school-name {
+      display: block;
+      font-size: 14px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+
+    .recent-school-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #718078;
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .recent-school-count {
+      flex-shrink: 0;
+      border-radius: 999px;
+      padding: 2px 7px;
+      color: #287746;
+      background: #dff3e5;
+      font-weight: 800;
+    }
+
+    .school-activity-detail {
+      border-top: 1px solid #e6eee8;
+      margin-top: 16px;
+      padding-top: 15px;
+    }
+
+    #schoolActivityDetail[hidden] {
+      display: none !important;
+    }
+
+    .school-activity-title {
+      color: #252f28;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+      margin-bottom: 5px;
+    }
+
+    .school-activity-meta {
+      color: #6b756d;
+      font-size: 12px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .activity-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .activity-tab {
+      border: 1px solid #dce9df;
+      border-radius: 10px;
+      background: #f7faf8;
+      color: #53645a;
+      padding: 9px 7px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .activity-tab.active {
+      border-color: #4caf72;
+      color: #216c3e;
+      background: #e8f7ed;
+    }
+
+    .activity-date-group {
+      border: 1px solid #e5ece7;
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .activity-date-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: #287746;
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .activity-date-count {
+      color: #6b756d;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .activity-entry {
+      border-top: 1px solid #edf1ee;
+      padding-top: 9px;
+      margin-top: 9px;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .activity-entry:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .activity-entry-title {
+      color: #303b33;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .activity-entry-score {
+      color: #8a6410;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .activity-entry-text {
+      color: #515c55;
+      white-space: pre-wrap;
+      margin-top: 4px;
+    }
+
+    .activity-entry-time {
+      color: #8a938d;
+      font-size: 10px;
+      margin-top: 5px;
     }
 
     .card {
@@ -248,7 +457,7 @@
     }
 
     .db-status {
-      width: min(950px, 94%);
+      width: min(1500px, 97%);
       margin: 14px auto 0;
       padding: 12px 15px;
       border-radius: 12px;
@@ -588,7 +797,31 @@
       padding: 25px;
     }
 
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: minmax(0, 1fr);
+        width: min(760px, 96%);
+      }
+
+      .activity-sidebar {
+        position: static;
+        max-height: none;
+      }
+
+      .recent-schools-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .activity-results {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     @media (max-width: 700px) {
+      .recent-schools-list,
+      .activity-results {
+        grid-template-columns: minmax(0, 1fr);
+      }
       header {
         padding: 32px 15px;
       }
@@ -635,6 +868,30 @@
   </div>
 
   <main class="container">
+    <aside class="activity-sidebar" aria-label="최근 학교 평가 및 건의사항">
+      <div class="activity-sidebar-header">
+        <h2>🆕 최근 7일 평가 학교</h2>
+        <button class="small-button open" type="button" onclick="refreshRecentSchoolActivity()">새로고침</button>
+      </div>
+      <p class="activity-sidebar-note">최근 7일 안에 새로 등록된 평가가 있는 학교입니다. 학교를 누르면 최근 평가와 건의사항을 날짜별로 확인할 수 있습니다.</p>
+      <div id="recentSchoolsList" class="recent-schools-list">
+        <div class="empty">데이터베이스 연결 후 최근 평가 학교를 불러옵니다.</div>
+      </div>
+
+      <section id="schoolActivityDetail" class="school-activity-detail" hidden>
+        <h3 id="schoolActivityTitle" class="school-activity-title"></h3>
+        <div id="schoolActivityMeta" class="school-activity-meta"></div>
+        <div class="activity-tabs" role="tablist" aria-label="학교 활동 종류">
+          <button id="activityReviewsTab" class="activity-tab active" type="button" role="tab" aria-selected="true" onclick="showSchoolActivity('reviews')">최근 평가</button>
+          <button id="activitySuggestionsTab" class="activity-tab" type="button" role="tab" aria-selected="false" onclick="showSchoolActivity('suggestions')">건의사항</button>
+        </div>
+        <div id="schoolActivityResults" class="activity-results">
+          <div class="empty">학교를 선택해 주세요.</div>
+        </div>
+      </section>
+    </aside>
+
+    <div class="main-content">
     <section class="card">
       <div class="search-row">
         <input id="schoolInput" type="text" placeholder="학교 이름 검색">
@@ -782,6 +1039,7 @@
         <div id="communityReviews"></div>
       </div>
     </section>
+    </div>
   </main>
 
   <footer>
@@ -814,6 +1072,10 @@
     let expectedRating = 0;
     let actualRating = 0;
     let authReady = null;
+    let recentActivityRows = [];
+    let recentActivitySchools = new Map();
+    let selectedActivitySchoolKey = null;
+    let selectedActivityMode = "reviews";
 
     function isDatabaseConfigured() {
       return Boolean(
@@ -1293,6 +1555,7 @@
         await refreshCommunityReviews();
         await refreshMyReviews();
         await refreshSchoolStats();
+        await refreshRecentSchoolActivity();
       } catch (error) {
         console.error("Save review failed:", error);
         alert("평가를 저장하지 못했습니다. " + (error.message || "Supabase 설정과 SQL 정책을 확인해주세요."));
@@ -1359,6 +1622,7 @@
         await refreshCommunityReviews();
         await refreshMyReviews();
         await refreshSchoolStats();
+        await refreshRecentSchoolActivity();
         alert("내 평가를 삭제했습니다.");
       } catch (error) {
         console.error("Delete review failed:", error);
@@ -1470,6 +1734,259 @@
           return `<span class="allergen-code" title="알레르기 유발 식품: ${escapeHTML(labels)}">${whole}</span>`;
         });
       }).join("<br>");
+    }
+
+    function activitySchoolKey(row) {
+      return `${String(row.office_code || "")}|${String(row.school_code || "")}`;
+    }
+
+    function formatActivityDate(value) {
+      const match = String(value || "").slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) return String(value || "날짜 미상");
+      const [, year, month, day] = match;
+      const date = new Date(Number(year), Number(month) - 1, Number(day));
+      const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+      return `${year}.${month}.${day} (${dayNames[date.getDay()]})`;
+    }
+
+    function formatActivityTime(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleString("ko-KR", {
+        month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+    }
+
+    function appendActivityEmpty(container, message) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = message;
+      container.appendChild(empty);
+    }
+
+    async function refreshRecentSchoolActivity() {
+      const list = document.getElementById("recentSchoolsList");
+      const detail = document.getElementById("schoolActivityDetail");
+      if (!list || !detail) return;
+
+      const previousKey = selectedActivitySchoolKey;
+      list.replaceChildren();
+      appendActivityEmpty(list, "최근 평가 학교를 불러오는 중입니다...");
+
+      try {
+        await waitForDatabase();
+        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data, error } = await supabaseClient
+          .from(TABLE_NAME)
+          .select("school_name, office_code, school_code, school_type, review_date, meal_code, meal_type, expected_opinion, expected_rating, actual_opinion, actual_rating, suggestion, created_at, updated_at")
+          .gte("created_at", cutoff)
+          .order("created_at", { ascending: false })
+          .limit(1000);
+
+        if (error) throw error;
+        recentActivityRows = data || [];
+        recentActivitySchools = new Map();
+
+        recentActivityRows.forEach(row => {
+          const key = activitySchoolKey(row);
+          if (!recentActivitySchools.has(key)) {
+            recentActivitySchools.set(key, {
+              key,
+              schoolName: row.school_name || "이름 없는 학교",
+              officeCode: row.office_code || "",
+              schoolCode: String(row.school_code || ""),
+              schoolType: row.school_type || "",
+              rows: [],
+              latestCreatedAt: row.created_at || ""
+            });
+          }
+          const school = recentActivitySchools.get(key);
+          school.rows.push(row);
+          if (row.created_at && (!school.latestCreatedAt || row.created_at > school.latestCreatedAt)) {
+            school.latestCreatedAt = row.created_at;
+          }
+        });
+
+        const schools = [...recentActivitySchools.values()]
+          .sort((a, b) => String(b.latestCreatedAt).localeCompare(String(a.latestCreatedAt)));
+        list.replaceChildren();
+
+        if (!schools.length) {
+          appendActivityEmpty(list, "최근 7일 동안 새로 등록된 평가가 없습니다.");
+          selectedActivitySchoolKey = null;
+          detail.hidden = true;
+          return;
+        }
+
+        schools.forEach(school => {
+          const suggestionCount = school.rows.filter(row => String(row.suggestion || "").trim()).length;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "recent-school-button" + (school.key === previousKey ? " active" : "");
+          button.setAttribute("aria-pressed", String(school.key === previousKey));
+          button.dataset.schoolKey = school.key;
+
+          const name = document.createElement("span");
+          name.className = "recent-school-name";
+          name.textContent = school.schoolName;
+
+          const meta = document.createElement("span");
+          meta.className = "recent-school-meta";
+          const last = document.createElement("span");
+          last.textContent = formatActivityTime(school.latestCreatedAt) + " 등록";
+          const count = document.createElement("span");
+          count.className = "recent-school-count";
+          count.textContent = `${school.rows.length}건`;
+          count.title = `최근 7일 신규 평가 ${school.rows.length}건, 건의사항 ${suggestionCount}건`;
+          meta.append(last, count);
+          button.append(name, meta);
+          button.addEventListener("click", () => selectActivitySchool(school.key));
+          list.appendChild(button);
+        });
+
+        if (previousKey && recentActivitySchools.has(previousKey)) {
+          selectActivitySchool(previousKey, false);
+        } else {
+          selectedActivitySchoolKey = null;
+          detail.hidden = true;
+        }
+      } catch (error) {
+        console.error("Recent school activity failed:", error);
+        list.replaceChildren();
+        appendActivityEmpty(list, "최근 활동을 불러오지 못했습니다. 데이터베이스 연결 및 읽기 권한을 확인해주세요.");
+        detail.hidden = true;
+      }
+    }
+
+    function selectActivitySchool(key, rerenderSchoolList = true) {
+      const school = recentActivitySchools.get(key);
+      const list = document.getElementById("recentSchoolsList");
+      const detail = document.getElementById("schoolActivityDetail");
+      if (!school || !detail) return;
+
+      selectedActivitySchoolKey = key;
+      detail.hidden = false;
+      document.getElementById("schoolActivityTitle").textContent = school.schoolName;
+      const suggestionCount = school.rows.filter(row => String(row.suggestion || "").trim()).length;
+      document.getElementById("schoolActivityMeta").textContent =
+        `최근 7일 신규 평가 ${school.rows.length}건 · 건의사항 ${suggestionCount}건`;
+
+      if (rerenderSchoolList && list) {
+        list.querySelectorAll(".recent-school-button").forEach(button => {
+          button.classList.toggle("active", button.dataset.schoolKey === key);
+          button.setAttribute("aria-pressed", String(button.dataset.schoolKey === key));
+        });
+      }
+
+      showSchoolActivity(selectedActivityMode);
+    }
+
+    function showSchoolActivity(mode) {
+      selectedActivityMode = mode === "suggestions" ? "suggestions" : "reviews";
+      const reviewsTab = document.getElementById("activityReviewsTab");
+      const suggestionsTab = document.getElementById("activitySuggestionsTab");
+      const results = document.getElementById("schoolActivityResults");
+      const school = recentActivitySchools.get(selectedActivitySchoolKey);
+      if (!results) return;
+
+      reviewsTab.classList.toggle("active", selectedActivityMode === "reviews");
+      reviewsTab.setAttribute("aria-selected", String(selectedActivityMode === "reviews"));
+      suggestionsTab.classList.toggle("active", selectedActivityMode === "suggestions");
+      suggestionsTab.setAttribute("aria-selected", String(selectedActivityMode === "suggestions"));
+      results.replaceChildren();
+
+      if (!school) {
+        appendActivityEmpty(results, "먼저 학교를 선택해 주세요.");
+        return;
+      }
+
+      let rows = school.rows;
+      if (selectedActivityMode === "suggestions") {
+        rows = rows.filter(row => String(row.suggestion || "").trim());
+      }
+
+      if (!rows.length) {
+        appendActivityEmpty(results, selectedActivityMode === "reviews"
+          ? "최근 7일 동안 등록된 평가가 없습니다."
+          : "최근 7일 동안 등록된 건의사항이 없습니다.");
+        return;
+      }
+
+      const grouped = new Map();
+      rows.forEach(row => {
+        const date = String(row.review_date || "날짜 미상").slice(0, 10);
+        if (!grouped.has(date)) grouped.set(date, []);
+        grouped.get(date).push(row);
+      });
+
+      [...grouped.entries()]
+        .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+        .forEach(([date, dayRows]) => {
+          const group = document.createElement("section");
+          group.className = "activity-date-group";
+          const heading = document.createElement("div");
+          heading.className = "activity-date-heading";
+          const dateLabel = document.createElement("span");
+          dateLabel.textContent = formatActivityDate(date);
+          const countLabel = document.createElement("span");
+          countLabel.className = "activity-date-count";
+          countLabel.textContent = `${dayRows.length}건`;
+          heading.append(dateLabel, countLabel);
+          group.appendChild(heading);
+
+          dayRows.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+          dayRows.forEach((row, index) => {
+            const entry = document.createElement("article");
+            entry.className = "activity-entry";
+            const title = document.createElement("div");
+            title.className = "activity-entry-title";
+            title.textContent = `${row.meal_type || "급식"} · 익명 평가 ${index + 1}`;
+            entry.appendChild(title);
+
+            if (selectedActivityMode === "reviews") {
+              const score = document.createElement("div");
+              score.className = "activity-entry-score";
+              const expected = Number(row.expected_rating || 0);
+              const actual = Number(row.actual_rating || 0);
+              score.textContent = `기대 ${expected > 0 ? `${expected}/5점` : "미평가"} · 실제 ${actual > 0 ? `${actual}/5점` : "미평가"}`;
+              entry.appendChild(score);
+
+              const details = [
+                ["기대 의견", row.expected_opinion],
+                ["실제 의견", row.actual_opinion]
+              ].filter(([, value]) => String(value || "").trim());
+              if (!details.length) {
+                const text = document.createElement("div");
+                text.className = "activity-entry-text";
+                text.textContent = "별점 위주로 작성된 평가입니다.";
+                entry.appendChild(text);
+              } else {
+                details.forEach(([label, value]) => {
+                  const text = document.createElement("div");
+                  text.className = "activity-entry-text";
+                  text.textContent = `${label}: ${value}`;
+                  entry.appendChild(text);
+                });
+              }
+            } else {
+              const suggestion = document.createElement("div");
+              suggestion.className = "activity-entry-text";
+              suggestion.textContent = row.suggestion;
+              entry.appendChild(suggestion);
+            }
+
+            const time = formatActivityTime(row.created_at);
+            if (time) {
+              const timestamp = document.createElement("div");
+              timestamp.className = "activity-entry-time";
+              timestamp.textContent = `등록 ${time}`;
+              entry.appendChild(timestamp);
+            }
+            group.appendChild(entry);
+          });
+          results.appendChild(group);
+        });
     }
 
     async function refreshSchoolStats() {
@@ -1699,6 +2216,7 @@
         if (isCurrentReview) resetReviewForm();
         await refreshMyReviews();
         await refreshSchoolStats();
+        await refreshRecentSchoolActivity();
         if (isCurrentReview) await refreshCommunityReviews();
         alert("내 평가를 삭제했습니다.");
       } catch (error) {
@@ -1747,6 +2265,7 @@
     authReady.then(ready => {
       if (ready) {
         refreshMyReviews();
+        refreshRecentSchoolActivity();
         if (selectedSchool) refreshSchoolStats();
       }
     });
