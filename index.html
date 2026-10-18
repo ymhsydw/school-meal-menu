@@ -31,6 +31,89 @@
       margin-bottom: 8px;
     }
 
+    .brand-button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .brand-button:focus-visible {
+      outline: 3px solid rgba(255,255,255,.85);
+      outline-offset: 5px;
+      border-radius: 5px;
+    }
+
+    .page-nav {
+      width: min(1500px, 97%);
+      margin: 14px auto 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .page-nav-button {
+      border: 1px solid #d9e8dd;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: #fff;
+      color: #356747;
+      font-weight: 800;
+    }
+
+    .page-nav-button.active {
+      background: #287746;
+      border-color: #287746;
+      color: #fff;
+    }
+
+    .page-view[hidden] {
+      display: none !important;
+    }
+
+    .date-list-button {
+      display: block;
+      width: 100%;
+      border: 1px solid #e1ebe4;
+      border-radius: 12px;
+      padding: 14px;
+      background: white;
+      text-align: left;
+      margin-top: 9px;
+      color: #263b2d;
+    }
+
+    .date-list-button:hover {
+      border-color: #4caf72;
+      background: #f3fbf5;
+    }
+
+    .date-list-date {
+      display: block;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .date-list-detail {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #69756d;
+      overflow-wrap: anywhere;
+    }
+
+    .page-back-row {
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     header p {
       opacity: 0.92;
     }
@@ -808,12 +891,9 @@
         max-height: none;
       }
 
-      .recent-schools-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
+      .recent-schools-list,
       .activity-results {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
       }
     }
 
@@ -859,13 +939,18 @@
 
 <body>
   <header>
-    <h1>🍚 학교 식단표 평가</h1>
+    <h1><button class="brand-button" type="button" onclick="resetToHome()" aria-label="학교 식단표 평가 홈으로">🍚 학교 식단표 평가</button></h1>
     <p>식단표를 확인하고 기대점수와 실제점수를 기록하세요</p>
   </header>
 
   <div id="dbStatus" class="db-status">
-    데이터베이스 연결 설정이 필요합니다. 아래 코드에서 Supabase URL과 공개 키를 입력하고 SQL 설정을 완료하세요.
+    Supabase 데이터베이스에 연결하는 중입니다...
   </div>
+
+  <nav class="page-nav" aria-label="주요 페이지">
+    <button id="navMeal" class="page-nav-button active" type="button" onclick="showPage('meal')">🍽️ 급식 페이지</button>
+    <button id="navRanking" class="page-nav-button" type="button" onclick="showPage('ranking')">🏆 평균 만족도 학교 순위</button>
+  </nav>
 
   <main class="container">
     <aside class="activity-sidebar" aria-label="최근 학교 평가 및 건의사항">
@@ -873,7 +958,7 @@
         <h2>🆕 최근 7일 평가 학교</h2>
         <button class="small-button open" type="button" onclick="refreshRecentSchoolActivity()">새로고침</button>
       </div>
-      <p class="activity-sidebar-note">최근 7일 안에 새로 등록된 평가가 있는 학교입니다. 학교를 누르면 최근 평가와 건의사항을 날짜별로 확인할 수 있습니다.</p>
+      <p class="activity-sidebar-note">최근 7일 내 평가가 새로 등록된 학교입니다. 학교 이름을 누르면 해당 학교 급식 페이지로 이동합니다.</p>
       <div id="recentSchoolsList" class="recent-schools-list">
         <div class="empty">데이터베이스 연결 후 최근 평가 학교를 불러옵니다.</div>
       </div>
@@ -892,6 +977,7 @@
     </aside>
 
     <div class="main-content">
+    <div id="mealPage" class="page-view">
     <section class="card">
       <div class="search-row">
         <input id="schoolInput" type="text" placeholder="학교 이름 검색">
@@ -917,7 +1003,7 @@
 
       <div id="mealArea">
         <div class="empty">
-          학교를 검색해서 선택해주세요.
+          학교를 검색해서 선택하거나 왼쪽의 최근 평가 학교를 눌러주세요.
         </div>
       </div>
 
@@ -950,30 +1036,6 @@
           괄호 안의 알레르기 번호는 색상으로 강조됩니다. 번호 위에 마우스를 올리면 해당 식품명을 확인할 수 있습니다.
         </div>
       </div>
-    </section>
-
-    <section class="card" id="statsSection">
-      <h2 class="section-title">📊 학교별 평가 통계 및 급식 순위</h2>
-      <div id="statsSummary" class="community-summary">학교를 선택하면 해당 학교의 평가 통계를 확인할 수 있습니다.</div>
-      <div class="stats-grid">
-        <div class="stats-metric"><span>누적 평가 수</span><strong id="statsReviewCount">-</strong></div>
-        <div class="stats-metric"><span>기대 평균</span><strong id="statsExpectedAverage">-</strong></div>
-        <div class="stats-metric"><span>실제 평균</span><strong id="statsActualAverage">-</strong></div>
-      </div>
-      <h3 class="section-title" style="font-size:17px; margin-top:12px;">🏆 실제 점수 기준 인기 급식</h3>
-      <div id="mealRankingList" class="rank-list">
-        <div class="empty">학교를 선택하면 순위가 표시됩니다.</div>
-      </div>
-      <p class="feature-note">순위는 선택한 학교의 Supabase 평가 중 실제 점수가 입력된 급식을 기준으로 계산합니다. 현재 순위 계산은 최근 최대 1,000개 평가 기록을 사용합니다.</p>
-    </section>
-
-    <section class="card" id="myReviewsSection">
-      <h2 class="section-title">🗂️ 내 평가 관리</h2>
-      <div id="myReviewsSummary" class="community-summary">본인 평가를 불러오는 중입니다...</div>
-      <div id="myReviewsList" class="my-review-list">
-        <div class="empty">평가 목록을 준비하고 있습니다.</div>
-      </div>
-      <p class="feature-note">현재는 익명 로그인 세션에 연결된 내 평가만 표시됩니다. 로그인 기능은 추후 추가할 예정이므로, 브라우저 데이터가 삭제되거나 다른 기기를 사용하면 기존 익명 세션의 평가를 불러오지 못할 수 있습니다.</p>
     </section>
 
     <section class="card" id="reviewSection" style="display: none;">
@@ -1039,6 +1101,48 @@
         <div id="communityReviews"></div>
       </div>
     </section>
+
+    <section class="card" id="myReviewsSection">
+      <h2 class="section-title">🗂️ 내 평가 · 날짜별 목록</h2>
+      <div id="myReviewsSummary" class="community-summary">현재 익명 세션으로 작성한 평가를 최신 날짜순으로 표시합니다.</div>
+      <div id="myReviewsList" class="my-review-list">
+        <div class="empty">평가 목록을 준비하고 있습니다.</div>
+      </div>
+      <p class="feature-note">날짜 목록을 누르면 평가 상세 페이지가 열립니다. 아직 로그인 기능은 없으므로 익명 세션 정보가 삭제되면 본인 기록을 다시 불러오지 못할 수 있습니다.</p>
+    </section>
+
+    </div>
+
+    <section id="rankingPage" class="page-view" hidden>
+      <div class="card">
+        <div class="page-back-row">
+          <h2 class="section-title" style="margin:0">🏆 평균 만족도 높은 학교 순위</h2>
+          <button class="gray-button" type="button" onclick="refreshSchoolRanking()">새로고침</button>
+        </div>
+        <div id="rankingSummary" class="community-summary">온라인 평가 데이터를 불러오는 중입니다...</div>
+        <div class="stats-grid">
+          <div class="stats-metric"><span>순위 산정 학교</span><strong id="rankingSchoolCount">-</strong></div>
+          <div class="stats-metric"><span>평가 데이터 수</span><strong id="rankingReviewCount">-</strong></div>
+          <div class="stats-metric"><span>평균 기준</span><strong>실제점수</strong></div>
+        </div>
+        <div id="schoolRankingList" class="rank-list"><div class="empty">학교 순위를 불러오는 중입니다.</div></div>
+        <p class="feature-note">학교별 실제 점수(1~5점)의 평균을 기준으로 정렬합니다. 평가 수와 점수 응답 수를 함께 표시합니다. 최근 업데이트 기준 최대 1,000개 기록이 계산에 반영됩니다.</p>
+      </div>
+    </section>
+
+    <section id="myReviewDetailPage" class="page-view" hidden>
+      <div class="card">
+        <div class="page-back-row">
+          <h2 class="section-title" style="margin:0">🗂️ 내 평가 상세</h2>
+          <button class="gray-button" type="button" onclick="showPage('meal')">급식 페이지로 돌아가기</button>
+        </div>
+        <div id="myReviewDetailContent" class="my-review-card">평가 날짜를 선택해 주세요.</div>
+        <div class="button-row">
+          <button class="green-button" type="button" onclick="editSelectedMyReview()">이 평가 열기 / 수정</button>
+          <button class="red-button" type="button" onclick="deleteSelectedMyReview()">이 평가 삭제</button>
+        </div>
+      </div>
+    </section>
     </div>
   </main>
 
@@ -1076,6 +1180,7 @@
     let recentActivitySchools = new Map();
     let selectedActivitySchoolKey = null;
     let selectedActivityMode = "reviews";
+    let selectedMyReviewDetail = null;
 
     function isDatabaseConfigured() {
       return Boolean(
@@ -1095,7 +1200,7 @@
     async function initializeDatabase() {
       if (!isDatabaseConfigured()) {
         setDatabaseStatus(
-          "데이터베이스 미연결 상태입니다. HTML 코드 상단의 SUPABASE_URL과 SUPABASE_PUBLIC_KEY를 입력하고, 제공된 SQL 파일을 Supabase SQL Editor에서 실행하세요."
+          "데이터베이스 연결 설정이 필요합니다. Supabase URL, 공개 키, 익명 로그인 및 SQL 권한을 확인해주세요."
         );
         return false;
       }
@@ -1304,7 +1409,7 @@
       updateSelectedSchool();
       clearMealSelection();
       loadMeal();
-      refreshSchoolStats();
+      refreshSchoolRanking();
       refreshMyReviews();
     }
 
@@ -1330,7 +1435,7 @@
       if (!selectedSchool) {
         area.innerHTML = `
           <div class="empty">
-            학교를 검색해서 선택해주세요.
+            학교를 검색해서 선택하거나 왼쪽의 최근 평가 학교를 눌러주세요.
           </div>
         `;
         return;
@@ -1554,7 +1659,7 @@
         setTimeout(() => { message.style.display = "none"; }, 2200);
         await refreshCommunityReviews();
         await refreshMyReviews();
-        await refreshSchoolStats();
+        await refreshSchoolRanking();
         await refreshRecentSchoolActivity();
       } catch (error) {
         console.error("Save review failed:", error);
@@ -1621,7 +1726,7 @@
         resetReviewForm();
         await refreshCommunityReviews();
         await refreshMyReviews();
-        await refreshSchoolStats();
+        await refreshSchoolRanking();
         await refreshRecentSchoolActivity();
         alert("내 평가를 삭제했습니다.");
       } catch (error) {
@@ -1831,17 +1936,11 @@
           name.className = "recent-school-name";
           name.textContent = school.schoolName;
 
-          const meta = document.createElement("span");
-          meta.className = "recent-school-meta";
-          const last = document.createElement("span");
-          last.textContent = formatActivityTime(school.latestCreatedAt) + " 등록";
-          const count = document.createElement("span");
-          count.className = "recent-school-count";
-          count.textContent = `${school.rows.length}건`;
-          count.title = `최근 7일 신규 평가 ${school.rows.length}건, 건의사항 ${suggestionCount}건`;
-          meta.append(last, count);
-          button.append(name, meta);
-          button.addEventListener("click", () => selectActivitySchool(school.key));
+          button.append(name);
+          button.addEventListener("click", () => {
+            selectActivitySchool(school.key);
+            openActivitySchoolMealPage(school);
+          });
           list.appendChild(button);
         });
 
@@ -1857,6 +1956,24 @@
         appendActivityEmpty(list, "최근 활동을 불러오지 못했습니다. 데이터베이스 연결 및 읽기 권한을 확인해주세요.");
         detail.hidden = true;
       }
+    }
+
+    function openActivitySchoolMealPage(school) {
+      selectedSchool = {
+        name: school.schoolName,
+        officeCode: school.officeCode,
+        schoolCode: String(school.schoolCode),
+        schoolType: school.schoolType || ""
+      };
+      document.getElementById("schoolInput").value = "";
+      document.getElementById("schoolResults").replaceChildren();
+      localStorage.setItem("mealReviewSelectedSchool", JSON.stringify(selectedSchool));
+      currentDate = new Date();
+      updateDateTitle();
+      updateSelectedSchool();
+      clearMealSelection();
+      showPage("meal");
+      loadMeal();
     }
 
     function selectActivitySchool(key, rerenderSchoolList = true) {
@@ -1989,90 +2106,63 @@
         });
     }
 
-    async function refreshSchoolStats() {
-      const summary = document.getElementById("statsSummary");
-      const countNode = document.getElementById("statsReviewCount");
-      const expectedNode = document.getElementById("statsExpectedAverage");
-      const actualNode = document.getElementById("statsActualAverage");
-      const list = document.getElementById("mealRankingList");
-
-      if (!selectedSchool) {
-        summary.textContent = "학교를 선택하면 해당 학교의 평가 통계를 확인할 수 있습니다.";
-        countNode.textContent = "-";
-        expectedNode.textContent = "-";
-        actualNode.textContent = "-";
-        list.replaceChildren();
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "학교를 선택하면 순위가 표시됩니다.";
-        list.appendChild(empty);
-        return;
-      }
+    async function refreshSchoolRanking() {
+      const summary = document.getElementById("rankingSummary");
+      const schoolCountNode = document.getElementById("rankingSchoolCount");
+      const reviewCountNode = document.getElementById("rankingReviewCount");
+      const list = document.getElementById("schoolRankingList");
+      if (!summary || !list) return;
+      list.replaceChildren();
 
       try {
         await waitForDatabase();
-        summary.textContent = `${selectedSchool.name}의 평가 데이터를 불러오는 중입니다...`;
-        const { data, error, count } = await supabaseClient
+        summary.textContent = "전체 학교의 평가를 집계하고 있습니다...";
+        const { data, error } = await supabaseClient
           .from(TABLE_NAME)
-          .select("school_name, school_code, review_date, meal_code, meal_type, expected_rating, actual_rating", { count: "exact" })
-          .eq("office_code", String(selectedSchool.officeCode))
-          .eq("school_code", String(selectedSchool.schoolCode))
-          .order("review_date", { ascending: false })
+          .select("school_name, office_code, school_code, school_type, actual_rating, updated_at")
+          .order("updated_at", { ascending: false })
           .limit(1000);
-
         if (error) throw error;
+
         const reviews = data || [];
-        const avg = values => values.length
-          ? (values.reduce((sum, number) => sum + number, 0) / values.length).toFixed(1)
-          : "—";
-        const expectedScores = reviews.map(row => Number(row.expected_rating || 0)).filter(value => value > 0);
-        const actualScores = reviews.map(row => Number(row.actual_rating || 0)).filter(value => value > 0);
-
-        countNode.textContent = String(count ?? reviews.length);
-        expectedNode.textContent = expectedScores.length ? `${avg(expectedScores)}점` : "평가 없음";
-        actualNode.textContent = actualScores.length ? `${avg(actualScores)}점` : "평가 없음";
-        summary.textContent = `${selectedSchool.name} · 최근 최대 1,000개 평가 기록 기준입니다. 별점을 입력한 평가만 평균 계산에 반영합니다.`;
-        list.replaceChildren();
-
         const grouped = new Map();
         reviews.forEach(row => {
-          const key = `${row.review_date}|${row.meal_code}`;
+          const key = `${String(row.office_code || "")}|${String(row.school_code || "")}`;
           if (!grouped.has(key)) {
             grouped.set(key, {
-              date: row.review_date,
-              mealType: row.meal_type || "급식",
-              expected: [],
-              actual: [],
-              reviewCount: 0
+              key,
+              schoolName: row.school_name || "이름 없는 학교",
+              schoolType: row.school_type || "",
+              totalReviews: 0,
+              scores: [],
+              latestUpdate: row.updated_at || ""
             });
           }
           const item = grouped.get(key);
-          item.reviewCount += 1;
-          const e = Number(row.expected_rating || 0);
-          const a = Number(row.actual_rating || 0);
-          if (e > 0) item.expected.push(e);
-          if (a > 0) item.actual.push(a);
+          item.totalReviews += 1;
+          const score = Number(row.actual_rating || 0);
+          if (score >= 1 && score <= 5) item.scores.push(score);
+          if (row.updated_at && row.updated_at > item.latestUpdate) item.latestUpdate = row.updated_at;
         });
 
         const ranked = [...grouped.values()]
-          .filter(item => item.actual.length > 0)
+          .filter(item => item.scores.length > 0)
           .map(item => ({
             ...item,
-            expectedAverage: item.expected.length ? item.expected.reduce((a, b) => a + b, 0) / item.expected.length : null,
-            actualAverage: item.actual.reduce((a, b) => a + b, 0) / item.actual.length
+            average: item.scores.reduce((sum, value) => sum + value, 0) / item.scores.length
           }))
-          .sort((a, b) => b.actualAverage - a.actualAverage || b.actual.length - a.actual.length || String(b.date).localeCompare(String(a.date)))
-          .slice(0, 10);
+          .sort((a, b) => b.average - a.average || b.scores.length - a.scores.length || b.totalReviews - a.totalReviews || a.schoolName.localeCompare(b.schoolName, "ko"));
+
+        schoolCountNode.textContent = String(ranked.length);
+        reviewCountNode.textContent = String(reviews.length);
+        summary.textContent = `검색한 학교와 무관한 전체 학교 순위입니다. 최근 수정된 최대 1,000개 평가 기록을 기준으로 실제 점수 평균을 계산했습니다.`;
 
         if (!ranked.length) {
-          const empty = document.createElement("div");
-          empty.className = "empty";
-          empty.textContent = "아직 실제 점수가 등록된 급식 평가가 없습니다.";
-          list.appendChild(empty);
+          appendActivityEmpty(list, "실제 점수가 등록된 평가가 없어 학교 순위를 계산할 수 없습니다.");
           return;
         }
 
-        ranked.forEach((item, index) => {
+        ranked.slice(0, 50).forEach((school, index) => {
           const card = document.createElement("article");
           card.className = "rank-item";
           const badge = document.createElement("div");
@@ -2081,22 +2171,45 @@
           const content = document.createElement("div");
           const title = document.createElement("div");
           title.className = "rank-item-title";
-          title.textContent = `${item.date} · ${item.mealType}`;
+          title.textContent = school.schoolName;
           const score = document.createElement("div");
           score.className = "rank-score";
-          score.textContent = `실제 평균 ${item.actualAverage.toFixed(1)}점 / 5점`;
+          score.textContent = `평균 만족도 ${school.average.toFixed(2)} / 5점`;
           const detail = document.createElement("div");
           detail.className = "rank-item-detail";
-          const expectedText = item.expectedAverage === null ? "기대 평균 없음" : `기대 평균 ${item.expectedAverage.toFixed(1)}점`;
-          const gapText = item.expectedAverage === null ? "" : ` · 기대 대비 ${(item.actualAverage - item.expectedAverage >= 0 ? "+" : "")}${(item.actualAverage - item.expectedAverage).toFixed(1)}점`;
-          detail.textContent = `${expectedText}${gapText} · 실제 별점 ${item.actual.length}개 · 전체 평가 ${item.reviewCount}개`;
-          content.append(title, score, detail);
+          detail.textContent = `${school.schoolType ? school.schoolType + " · " : ""}평가 ${school.totalReviews}개 · 실제 점수 응답 ${school.scores.length}개`;
+          const open = document.createElement("button");
+          open.type = "button";
+          open.className = "small-button open";
+          open.style.marginTop = "9px";
+          open.textContent = "이 학교 급식 보기";
+          // Ranking rows do not always carry the codes in the old row shape; attach exact codes from the row group key.
+          const codeParts = school.key.split("|");
+          open.addEventListener("click", () => {
+            selectedSchool = {
+              name: school.schoolName,
+              officeCode: codeParts[0] || "",
+              schoolCode: codeParts[1] || "",
+              schoolType: school.schoolType || ""
+            };
+            localStorage.setItem("mealReviewSelectedSchool", JSON.stringify(selectedSchool));
+            document.getElementById("schoolInput").value = "";
+            document.getElementById("schoolResults").replaceChildren();
+            currentDate = new Date();
+            updateDateTitle();
+            updateSelectedSchool();
+            clearMealSelection();
+            showPage("meal");
+            loadMeal();
+          });
+          content.append(title, score, detail, open);
           card.append(badge, content);
           list.appendChild(card);
         });
       } catch (error) {
-        console.error("School stats failed:", error);
-        summary.textContent = "통계를 불러오지 못했습니다. Supabase 연결과 테이블 권한을 확인해주세요.";
+        console.error("School ranking failed:", error);
+        summary.textContent = "학교 순위를 불러오지 못했습니다. 연결 상태, 테이블 읽기 권한을 확인해주세요.";
+        appendActivityEmpty(list, error.message || "Supabase 설정을 확인해주세요.");
       }
     }
 
@@ -2129,42 +2242,26 @@
         }
 
         reviews.forEach(review => {
-          const card = document.createElement("article");
-          card.className = "my-review-card";
-          const title = document.createElement("div");
-          title.className = "my-review-title";
-          title.textContent = `${review.school_name} · ${review.review_date} · ${review.meal_type || "급식"}`;
-          const score = document.createElement("div");
-          score.className = "community-review-rating";
-          score.style.marginTop = "7px";
-          score.textContent = `기대 ${Number(review.expected_rating || 0)}/5점 · 실제 ${Number(review.actual_rating || 0)}/5점`;
-          card.append(title, score);
-
-          const detailLines = [
-            ["기대 의견", review.expected_opinion],
-            ["실제 의견", review.actual_opinion],
-            ["건의사항", review.suggestion]
-          ].filter(([label, value]) => String(value || "").trim());
-          detailLines.forEach(([label, value]) => {
-            const line = document.createElement("div");
-            line.className = "my-review-detail";
-            line.textContent = `${label}: ${value}`;
-            card.appendChild(line);
-          });
-
-          const actions = document.createElement("div");
-          actions.className = "my-review-actions";
-          const openButton = document.createElement("button");
-          openButton.className = "small-button open";
-          openButton.textContent = "이 평가 열기 / 수정";
-          openButton.addEventListener("click", () => openMyReview(review));
-          const deleteButton = document.createElement("button");
-          deleteButton.className = "small-button delete";
-          deleteButton.textContent = "이 평가 삭제";
-          deleteButton.addEventListener("click", () => deleteMyReview(review));
-          actions.append(openButton, deleteButton);
-          card.appendChild(actions);
-          list.appendChild(card);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "date-list-button";
+          const date = document.createElement("span");
+          date.className = "date-list-date";
+          date.textContent = `${formatActivityDate(review.review_date)} · ${review.school_name}`;
+          const detail = document.createElement("span");
+          detail.className = "date-list-detail";
+          detail.textContent = `${review.meal_type || "급식"} · 기대 ${Number(review.expected_rating || 0)}/5점 · 실제 ${Number(review.actual_rating || 0)}/5점`;
+          const hasSuggestion = String(review.suggestion || "").trim();
+          if (hasSuggestion) {
+            const suggestion = document.createElement("span");
+            suggestion.className = "date-list-detail";
+            suggestion.textContent = `건의사항: ${review.suggestion}`;
+            button.append(date, detail, suggestion);
+          } else {
+            button.append(date, detail);
+          }
+          button.addEventListener("click", () => openMyReviewDetail(review));
+          list.appendChild(button);
         });
       } catch (error) {
         console.error("My reviews failed:", error);
@@ -2176,9 +2273,112 @@
       }
     }
 
+    function openMyReviewDetail(review) {
+      selectedMyReviewDetail = review;
+      const area = document.getElementById("myReviewDetailContent");
+      area.replaceChildren();
+      const title = document.createElement("div");
+      title.className = "my-review-title";
+      title.textContent = `${formatActivityDate(review.review_date)} · ${review.school_name} · ${review.meal_type || "급식"}`;
+      area.appendChild(title);
+      const ratings = document.createElement("div");
+      ratings.className = "community-review-rating";
+      ratings.style.marginTop = "9px";
+      ratings.textContent = `기대 ${Number(review.expected_rating || 0)}/5점 · 실제 ${Number(review.actual_rating || 0)}/5점`;
+      area.appendChild(ratings);
+      const values = [
+        ["기대 의견", review.expected_opinion],
+        ["실제 의견", review.actual_opinion],
+        ["건의사항", review.suggestion]
+      ];
+      values.forEach(([label, value]) => {
+        const block = document.createElement("div");
+        block.className = "my-review-detail";
+        block.style.marginTop = "12px";
+        const strong = document.createElement("strong");
+        strong.textContent = `${label}: `;
+        block.append(strong, document.createTextNode(String(value || "작성 내용 없음")));
+        area.appendChild(block);
+      });
+      showPage("myReviewDetail");
+    }
+
+    async function editSelectedMyReview() {
+      if (!selectedMyReviewDetail) {
+        alert("먼저 내 평가 날짜를 선택해주세요.");
+        return;
+      }
+      await openMyReview(selectedMyReviewDetail);
+    }
+
+    async function deleteSelectedMyReview() {
+      if (!selectedMyReviewDetail) {
+        alert("먼저 내 평가 날짜를 선택해주세요.");
+        return;
+      }
+      const review = selectedMyReviewDetail;
+      if (!confirm(`${review.school_name} ${review.review_date} ${review.meal_type || "급식"} 평가를 삭제할까요?`)) return;
+      try {
+        await waitForDatabase();
+        const { error } = await supabaseClient
+          .from(TABLE_NAME)
+          .delete()
+          .eq("id", review.id)
+          .eq("user_id", currentUser.id);
+        if (error) throw error;
+        selectedMyReviewDetail = null;
+        await refreshMyReviews();
+        await refreshSchoolRanking();
+        await refreshRecentSchoolActivity();
+        showPage("meal");
+        alert("내 평가를 삭제했습니다.");
+      } catch (error) {
+        console.error("Delete selected review failed:", error);
+        alert("평가를 삭제하지 못했습니다. " + (error.message || "데이터베이스 설정을 확인해주세요."));
+      }
+    }
+
+    function showPage(page) {
+      const views = {
+        meal: document.getElementById("mealPage"),
+        ranking: document.getElementById("rankingPage"),
+        myReviewDetail: document.getElementById("myReviewDetailPage")
+      };
+      Object.entries(views).forEach(([key, element]) => {
+        if (element) element.hidden = key !== page;
+      });
+      document.getElementById("navMeal").classList.toggle("active", page === "meal");
+      document.getElementById("navRanking").classList.toggle("active", page === "ranking");
+      if (page === "ranking") refreshSchoolRanking();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function resetToHome() {
+      showPage("meal");
+      selectedSchool = null;
+      selectedMeal = null;
+      selectedActivitySchoolKey = null;
+      selectedMyReviewDetail = null;
+      currentDate = new Date();
+      localStorage.removeItem("mealReviewSelectedSchool");
+      document.getElementById("schoolInput").value = "";
+      document.getElementById("schoolResults").replaceChildren();
+      document.getElementById("selectedSchool").style.display = "none";
+      document.getElementById("mealArea").innerHTML = '<div class="empty">학교를 검색해서 선택하거나 왼쪽의 최근 평가 학교를 눌러주세요.</div>';
+      document.getElementById("reviewSection").style.display = "none";
+      document.getElementById("schoolActivityDetail").hidden = true;
+      document.querySelectorAll(".recent-school-button").forEach(button => {
+        button.classList.remove("active");
+        button.setAttribute("aria-pressed", "false");
+      });
+      resetReviewForm();
+      updateDateTitle();
+    }
+
     async function openMyReview(review) {
       try {
         await waitForDatabase();
+        showPage("meal");
         selectedSchool = {
           name: review.school_name,
           officeCode: review.office_code,
@@ -2215,7 +2415,7 @@
           String(selectedMeal.code) === String(review.meal_code);
         if (isCurrentReview) resetReviewForm();
         await refreshMyReviews();
-        await refreshSchoolStats();
+        await refreshSchoolRanking();
         await refreshRecentSchoolActivity();
         if (isCurrentReview) await refreshCommunityReviews();
         alert("내 평가를 삭제했습니다.");
@@ -2266,7 +2466,7 @@
       if (ready) {
         refreshMyReviews();
         refreshRecentSchoolActivity();
-        if (selectedSchool) refreshSchoolStats();
+        refreshSchoolRanking();
       }
     });
   </script>
